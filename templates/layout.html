@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+
+    <!-- Navbar Component -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="{{ url_for('index') }}" class="text-xl font-bold text-gray-800">Flask Video App</a>
+            <div class="space-x-4">
+                <a href="{{ url_for('index') }}" class="text-gray-600 hover:text-blue-500 font-medium">หน้าแรก</a>
+                <a href="{{ url_for('upload_controller.upload_page') }}" class="text-gray-600 hover:text-blue-500 font-medium">อัปโหลดวิดีโอ</a>
+                <a href="{{ url_for('webcam_controller.camera_page') }}" class="text-gray-600 hover:text-blue-500 font-medium">เปิดกล้องสด</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Injection -->
+    <main class="max-w-4xl mx-auto p-6 mt-6">
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

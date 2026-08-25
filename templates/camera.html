@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">เปิดกล้องสด Real-time (YOLO Detection)</h1>
+    <p class="text-sm text-gray-600 mb-4">ระบบจะทำการดึงภาพจากกล้องเซิร์ฟเวอร์มาประมวลผลผ่าน YOLO แบบสดๆ</p>
+    
+    <div class="relative bg-black rounded overflow-hidden shadow-lg aspect-video flex items-center justify-center">
+        <!-- แสดงสตรีมภาพจากกล้องผ่าน Flask Route โดยตรง -->
+        <img src="{{ url_for('webcam_controller.webcam_feed') }}" class="w-full h-full object-cover" alt="Webcam YOLO Stream">
+    </div>
+
+    <div class="mt-6">
+        <a href="{{ url_for('index') }}" class="inline-block bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded transition">
+            กลับหน้าแรก
+        </a>
+    </div>
+</div>
+{% endblock %}
