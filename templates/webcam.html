@@ -1,0 +1,856 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="bg-white p-8 rounded-lg shadow-md max-w-4xl mx-auto">
+
+    <!-- ================================================= -->
+    <!-- Title -->
+    <!-- ================================================= -->
+
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">
+        Webcam YOLO Object Counter
+    </h1>
+
+
+    <!-- ================================================= -->
+    <!-- Camera Selection -->
+    <!-- ================================================= -->
+
+    <div class="my-2">
+
+        <label for="camera-select" class="block text-sm font-medium text-gray-700 mb-2">
+            เลือก Webcam
+        </label>
+
+        <select id="camera-select" class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+
+            <option value="">
+                กำลังค้นหา Webcam...
+            </option>
+
+        </select>
+
+    </div>
+
+    <div id="status" class="mb-5 text-sm text-gray-600">
+        Status: กำลังเริ่มต้น
+    </div>
+
+
+
+    <!-- ================================================= -->
+    <!-- Webcam -->
+    <!-- ================================================= -->
+
+    <div class="relative bg-black rounded overflow-hidden shadow-lg">
+
+        <img id="webcam-stream" src="" alt="Webcam Stream" class="w-full aspect-video object-cover block">
+
+
+        <!-- Drawing Canvas -->
+
+        <canvas id="line-canvas" class="absolute inset-0 w-full h-full" style="cursor: crosshair;"></canvas>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- Line Information -->
+    <!-- ================================================= -->
+
+    <div id="line-info" class="my-4 text-sm text-gray-600">
+        วาดเส้นบนภาพเพื่อกำหนดจุดนับ
+    </div>
+
+    <!-- ================================================= -->
+    <!-- Model Selection -->
+    <!-- ================================================= -->
+
+    <div class="mb-5">
+
+
+        <select id="model-select" class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+
+            {% if models %}
+
+            {% for model in models %}
+
+            <option value="{{ model }}">
+                {{ model }}
+            </option>
+
+            {% endfor %}
+
+            {% else %}
+
+            <option value="">
+                ไม่พบ YOLO Model
+            </option>
+
+            {% endif %}
+
+        </select>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- Buttons -->
+    <!-- ================================================= -->
+
+    <div class="flex flex-wrap gap-3 mt-5">
+
+        <button id="clear-line" type="button"
+            class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded transition">
+            Clear Line
+        </button>
+
+
+        <button id="start-counter" type="button"
+            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded transition">
+            Start Detection
+        </button>
+
+
+        <button id="stop-counter" type="button"
+            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-5 rounded transition">
+            Stop
+        </button>
+
+    </div>
+
+
+
+
+
+
+
+
+</div>
+
+
+<script>
+
+    // ======================================================
+    // Processing Resolution
+    // ======================================================
+
+    const PROCESS_WIDTH = 640;
+    const PROCESS_HEIGHT = 360;
+
+
+    // ======================================================
+    // Elements
+    // ======================================================
+
+    const cameraSelect =
+        document.getElementById(
+            "camera-select"
+        );
+
+    const modelSelect =
+        document.getElementById(
+            "model-select"
+        );
+
+    const webcamStream =
+        document.getElementById(
+            "webcam-stream"
+        );
+
+    const canvas =
+        document.getElementById(
+            "line-canvas"
+        );
+
+    const ctx =
+        canvas.getContext("2d");
+
+    const clearButton =
+        document.getElementById(
+            "clear-line"
+        );
+
+    const startButton =
+        document.getElementById(
+            "start-counter"
+        );
+
+    const stopButton =
+        document.getElementById(
+            "stop-counter"
+        );
+
+    const lineInfo =
+        document.getElementById(
+            "line-info"
+        );
+
+    const status =
+        document.getElementById(
+            "status"
+        );
+
+
+    // ======================================================
+    // State
+    // ======================================================
+
+    let startPoint = null;
+    let endPoint = null;
+
+    let drawing = false;
+
+    let detectionRunning = false;
+
+
+    // ======================================================
+    // Canvas
+    // ======================================================
+
+    function resizeCanvas() {
+
+        canvas.width =
+            PROCESS_WIDTH;
+
+        canvas.height =
+            PROCESS_HEIGHT;
+
+        drawLine();
+    }
+
+
+    // ======================================================
+    // Convert Mouse Position
+    // ======================================================
+
+    function getPoint(event) {
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+
+        return {
+
+            x: Math.round(
+                (event.clientX - rect.left)
+                * PROCESS_WIDTH
+                / rect.width
+            ),
+
+            y: Math.round(
+                (event.clientY - rect.top)
+                * PROCESS_HEIGHT
+                / rect.height
+            )
+
+        };
+    }
+
+
+    // ======================================================
+    // Draw Line
+    // ======================================================
+
+    function drawLine() {
+
+        ctx.clearRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        if (
+            !startPoint ||
+            !endPoint
+        ) {
+
+            return;
+        }
+
+
+        // --------------------------------------------------
+        // Line
+        // --------------------------------------------------
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            startPoint.x,
+            startPoint.y
+        );
+
+        ctx.lineTo(
+            endPoint.x,
+            endPoint.y
+        );
+
+        ctx.lineWidth = 4;
+
+        ctx.strokeStyle = "red";
+
+        ctx.stroke();
+
+
+        // --------------------------------------------------
+        // Start Point
+        // --------------------------------------------------
+
+        ctx.beginPath();
+
+        ctx.arc(
+            startPoint.x,
+            startPoint.y,
+            7,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle = "green";
+
+        ctx.fill();
+
+
+        // --------------------------------------------------
+        // End Point
+        // --------------------------------------------------
+
+        ctx.beginPath();
+
+        ctx.arc(
+            endPoint.x,
+            endPoint.y,
+            7,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle = "blue";
+
+        ctx.fill();
+
+
+        // --------------------------------------------------
+        // Coordinates
+        // --------------------------------------------------
+
+        lineInfo.innerText =
+            `Line: `
+            + `(${startPoint.x}, ${startPoint.y})`
+            + ` → `
+            + `(${endPoint.x}, ${endPoint.y})`;
+    }
+
+
+    // ======================================================
+    // Pointer Down
+    // ======================================================
+
+    canvas.addEventListener(
+        "pointerdown",
+        function (event) {
+
+            if (detectionRunning) {
+                return;
+            }
+
+
+            drawing = true;
+
+            startPoint =
+                getPoint(event);
+
+            endPoint =
+                startPoint;
+
+
+            canvas.setPointerCapture(
+                event.pointerId
+            );
+
+
+            drawLine();
+        }
+    );
+
+
+    // ======================================================
+    // Pointer Move
+    // ======================================================
+
+    canvas.addEventListener(
+        "pointermove",
+        function (event) {
+
+            if (
+                !drawing ||
+                detectionRunning
+            ) {
+
+                return;
+            }
+
+
+            endPoint =
+                getPoint(event);
+
+            drawLine();
+        }
+    );
+
+
+    // ======================================================
+    // Pointer Up
+    // ======================================================
+
+    canvas.addEventListener(
+        "pointerup",
+        function (event) {
+
+            if (!drawing) {
+                return;
+            }
+
+
+            drawing = false;
+
+            endPoint =
+                getPoint(event);
+
+            drawLine();
+        }
+    );
+
+
+    // ======================================================
+    // Clear Line
+    // ======================================================
+
+    clearButton.addEventListener(
+        "click",
+        function () {
+
+            if (detectionRunning) {
+                return;
+            }
+
+
+            startPoint = null;
+            endPoint = null;
+
+
+            ctx.clearRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+
+            lineInfo.innerText =
+                "วาดเส้นบนภาพเพื่อกำหนดจุดนับ";
+        }
+    );
+
+
+    // ======================================================
+    // Get Webcam List
+    // ======================================================
+
+    async function getCameras() {
+
+        try {
+
+            status.innerText =
+                "Status: กำลังค้นหา Webcam...";
+
+
+            const response =
+                await fetch(
+                    "{{ url_for('webcam_controller.cameras') }}"
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Cannot get cameras"
+                );
+            }
+
+
+            const data =
+                await response.json();
+
+
+            cameraSelect.innerHTML = "";
+
+
+            if (
+                !data.cameras ||
+                data.cameras.length === 0
+            ) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value = "";
+
+                option.textContent =
+                    "ไม่พบ Webcam";
+
+                cameraSelect.appendChild(
+                    option
+                );
+
+
+                status.innerText =
+                    "Status: ไม่พบ Webcam";
+
+                return;
+            }
+
+
+            // ------------------------------------------------
+            // Add Cameras
+            // ------------------------------------------------
+
+            data.cameras.forEach(
+                function (cameraIndex) {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        cameraIndex;
+
+                    option.textContent =
+                        `Webcam ${cameraIndex}`;
+
+                    cameraSelect.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+
+            status.innerText =
+                "Status: Webcam Preview";
+
+
+            // ------------------------------------------------
+            // Preview
+            // ------------------------------------------------
+
+            startPreview();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            status.innerText =
+                "Status: ไม่สามารถค้นหา Webcam ได้";
+        }
+    }
+
+
+    // ======================================================
+    // Preview
+    // ======================================================
+
+    function startPreview() {
+
+        const cameraIndex =
+            cameraSelect.value;
+
+
+        if (
+            cameraIndex === ""
+        ) {
+
+            return;
+        }
+
+
+        // --------------------------------------------------
+        // Stop Existing Stream
+        // --------------------------------------------------
+
+        webcamStream.src = "";
+
+
+        // --------------------------------------------------
+        // Start Preview
+        // --------------------------------------------------
+
+        webcamStream.src =
+            "{{ url_for('webcam_controller.webcam_feed') }}"
+            + "?camera="
+            + encodeURIComponent(cameraIndex)
+            + "&mode=preview";
+
+
+        status.innerText =
+            `Status: Webcam ${cameraIndex} Preview`;
+    }
+
+
+    // ======================================================
+    // Camera Changed
+    // ======================================================
+
+    cameraSelect.addEventListener(
+        "change",
+        function () {
+
+            if (detectionRunning) {
+
+                stopDetection();
+
+                return;
+            }
+
+
+            startPreview();
+
+        }
+    );
+
+
+    // ======================================================
+    // Start Detection
+    // ======================================================
+
+    startButton.addEventListener(
+        "click",
+        function () {
+
+            // ------------------------------------------------
+            // Validate Line
+            // ------------------------------------------------
+
+            if (
+                !startPoint ||
+                !endPoint
+            ) {
+
+                alert(
+                    "กรุณาวาดเส้นก่อนเริ่ม Detection"
+                );
+
+                return;
+            }
+
+
+            // ------------------------------------------------
+            // Validate Camera
+            // ------------------------------------------------
+
+            const cameraIndex =
+                cameraSelect.value;
+
+
+            if (
+                cameraIndex === ""
+            ) {
+
+                alert(
+                    "ไม่พบ Webcam"
+                );
+
+                return;
+            }
+
+
+            // ------------------------------------------------
+            // Validate Model
+            // ------------------------------------------------
+
+            const modelName =
+                modelSelect.value;
+
+
+            if (
+                modelName === ""
+            ) {
+
+                alert(
+                    "กรุณาเลือก YOLO Model"
+                );
+
+                return;
+            }
+
+
+            // ------------------------------------------------
+            // Parameters
+            // ------------------------------------------------
+
+            const params =
+                new URLSearchParams({
+
+                    camera:
+                        cameraIndex,
+
+                    mode:
+                        "detection",
+
+                    model:
+                        modelName,
+
+                    x1:
+                        startPoint.x,
+
+                    y1:
+                        startPoint.y,
+
+                    x2:
+                        endPoint.x,
+
+                    y2:
+                        endPoint.y
+
+                });
+
+
+            // ------------------------------------------------
+            // Stop Preview
+            // ------------------------------------------------
+
+            webcamStream.src = "";
+
+
+            // ------------------------------------------------
+            // Start Detection
+            // ------------------------------------------------
+
+            webcamStream.src =
+                "{{ url_for('webcam_controller.webcam_feed') }}"
+                + "?"
+                + params.toString();
+
+
+            detectionRunning = true;
+
+
+            // ------------------------------------------------
+            // Disable Controls
+            // ------------------------------------------------
+
+            cameraSelect.disabled = true;
+
+            modelSelect.disabled = true;
+
+            clearButton.disabled = true;
+
+
+            canvas.classList.add(
+                "hidden"
+            );
+
+
+            status.innerText =
+                `Status: Detection Running`
+                + ` | Model: ${modelName}`;
+
+        }
+    );
+
+
+    // ======================================================
+    // Stop Detection
+    // ======================================================
+
+    function stopDetection() {
+
+        detectionRunning = false;
+
+
+        // --------------------------------------------------
+        // Stop Stream
+        // --------------------------------------------------
+
+        webcamStream.src = "";
+
+
+        // --------------------------------------------------
+        // Enable Controls
+        // --------------------------------------------------
+
+        cameraSelect.disabled = false;
+
+        modelSelect.disabled = false;
+
+        clearButton.disabled = false;
+
+
+        // --------------------------------------------------
+        // Show Drawing Canvas
+        // --------------------------------------------------
+
+        canvas.classList.remove(
+            "hidden"
+        );
+
+
+        // --------------------------------------------------
+        // Start Preview
+        // --------------------------------------------------
+
+        startPreview();
+
+
+        status.innerText =
+            "Status: Webcam Preview";
+    }
+
+
+    // ======================================================
+    // Stop Button
+    // ======================================================
+
+    stopButton.addEventListener(
+        "click",
+        function () {
+
+            stopDetection();
+
+        }
+    );
+
+
+    // ======================================================
+    // Initialize
+    // ======================================================
+
+    resizeCanvas();
+
+    getCameras();
+
+
+    // ======================================================
+    // Window Resize
+    // ======================================================
+
+    window.addEventListener(
+        "resize",
+        function () {
+
+            resizeCanvas();
+
+        }
+    );
+
+</script>
+
+{% endblock %}
