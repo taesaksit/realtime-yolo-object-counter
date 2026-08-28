@@ -1,18 +1,107 @@
 {% extends "layout.html" %}
+
 {% block content %}
+
 <div class="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl mx-auto">
-    <h1 class="text-2xl font-bold mb-6 text-gray-800">เปิดกล้องสด Real-time (YOLO Detection)</h1>
-    <p class="text-sm text-gray-600 mb-4">ระบบจะทำการดึงภาพจากกล้องเซิร์ฟเวอร์มาประมวลผลผ่าน YOLO แบบสดๆ</p>
-    
-    <div class="relative bg-black rounded overflow-hidden shadow-lg aspect-video flex items-center justify-center">
-        <!-- แสดงสตรีมภาพจากกล้องผ่าน Flask Route โดยตรง -->
-        <img src="{{ url_for('webcam_controller.webcam_feed') }}" class="w-full h-full object-cover" alt="Webcam YOLO Stream">
+
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">
+        เปิดกล้องสด Real-time (YOLO Detection)
+    </h1>
+
+    <p class="text-sm text-gray-600 mb-6">
+        ระบบจะดึงภาพจากกล้องเซิร์ฟเวอร์มาประมวลผลผ่าน YOLO แบบ Real-time
+    </p>
+
+
+    <!-- Camera Selection -->
+    <div class="mb-6 text-left">
+
+        <label for="cameraSelect" class="block text-sm font-medium text-gray-700 mb-2">
+            เลือกกล้อง
+        </label>
+
+        <select id="cameraSelect" class="w-full border border-gray-300 rounded-lg px-4 py-2
+                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+            {% if cameras %}
+
+            {% for camera in cameras %}
+
+            <option value="{{ camera.index }}">
+                {{ camera.name }}
+            </option>
+
+            {% endfor %}
+
+            {% else %}
+
+            <option value="">
+                ไม่พบกล้อง
+            </option>
+
+            {% endif %}
+
+        </select>
+
     </div>
 
+
+    <!-- Webcam -->
+    <div class="relative bg-black rounded overflow-hidden shadow-lg
+               aspect-video flex items-center justify-center">
+
+        {% if cameras %}
+
+        <img id="webcamStream" src="{{ url_for(
+                    'webcam_controller.webcam_feed',
+                    camera=cameras[0].index
+                ) }}" class="w-full h-full object-cover" alt="Webcam YOLO Stream">
+
+        {% else %}
+
+        <div class="text-white">
+            ไม่พบอุปกรณ์กล้อง
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- Back -->
     <div class="mt-6">
-        <a href="{{ url_for('index') }}" class="inline-block bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded transition">
+
+        <a href="{{ url_for('index') }}" class="inline-block bg-gray-500 hover:bg-gray-600
+                   text-white font-bold py-2 px-6 rounded transition">
             กลับหน้าแรก
         </a>
+
     </div>
+
 </div>
+
+
+<script>
+
+    const cameraSelect = document.getElementById("cameraSelect");
+    const webcamStream = document.getElementById("webcamStream");
+
+    if (cameraSelect && webcamStream) {
+
+        cameraSelect.addEventListener("change", function () {
+
+            const cameraIndex = this.value;
+
+            // เปลี่ยน URL ของ MJPEG Stream
+            webcamStream.src =
+                "{{ url_for('webcam_controller.webcam_feed') }}"
+                + "?camera="
+                + cameraIndex;
+
+        });
+
+    }
+
+</script>
+
 {% endblock %}
