@@ -1,37 +1,68 @@
-# Flask Video & Camera  With YOLO
+# YOLO Object Counter With Flask
 
-เว็บแอปพลิเคชันสำหรับประมวลผลและสตรีมวิดีโอแบบ Real-time ด้วยโมเดล YOLOv8 บน Flask Framework
+A simple Flask web application for YOLO object counter with video files and webcam.
+
+
+▶️ Video Demo : https://youtu.be/IryjkMwz_aI
+
 
 ---
+## Features
+- Upload and process video
+- Draw a custom counting line
+- Select YOLO model
+- Real-time webcam detection
+- CPU / GPU support
 
-## 📁 Project Structure
 
-โครงสร้างไฟล์และโฟลเดอร์ภายในโปรเจกต์:
+
+## Example
+
+
+<div>
+<table>
+    <tr>
+        <td><img src="demo.png" ></td>
+        <td>
+            <a href="https://youtu.be/IryjkMwz_aI"><img src="demo_youtube.png" ></a>
+        </td>
+    </tr>
+</table>
+</div>
+
+
+
+
+
+
+## Folder Structure
 
 ```text
-├── app.py
-├── controllers
-│   ├── __pycache__
-│   │   ├── main_controller.cpython-313.pyc
-│   │   ├── upload_controller.cpython-313.pyc
-│   │   └── webcam_controller.cpython-313.pyc
-│   ├── upload_controller.py
-│   └── webcam_controller.py
-├── readme.md
-├── requirements.txt
-├── static
-│   └── uploads
-│       ├── 13002160_1920_1080_60fps.mp4
-│       ├── 18437773-uhd_3840_2160_50fps.mp4
-│       ├── 795.mov
-│       └── car.mp4
-├── templates
-│   ├── camera.html
-│   ├── index.html
-│   ├── layout.html
-│   └── upload.html
-├── utils
-│   ├── __pycache__
-│   │   └── monad.cpython-313.pyc
-│   └── monad.py
-└── yolov8n.pt
+📦 Flask Video & Camera With YOLO
+├── 📂 controllers/
+│   ├── 📄 upload_controller.py
+│   └── 📄 webcam_controller.py
+│
+├── 📂 services/
+│   └── 📄 model_service.py
+│
+├── 📂 utils/
+│   ├── 📄 device.py
+│   └── 📄 monad.py
+│
+├── 📂 models/
+│   └── 📄 *.pt
+│
+├── 📂 static/
+│   └── 📂 uploads/
+│
+├── 📂 templates/
+│   ├── 📄 layout.html
+│   ├── 📄 index.html
+│   ├── 📄 upload.html
+│   └── 📄 webcam.html
+│
+├── 📄 app.py
+├── 📄 requirements.txt
+└── 📄 README.md
+```
