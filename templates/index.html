@@ -1,11 +1,25 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="bg-white p-8 rounded-lg shadow-md text-center">
-    <h1 class="text-3xl font-bold mb-4 text-gray-800">ยินดีต้อนรับสู่ระบบประมวลผลวิดีโอ</h1>
-    <p class="text-gray-600 mb-6">กรุณาเลือกเมนูด้านบนเพื่อใช้งานฟังก์ชันอัปโหลดวิดีโอหรือเปิดกล้องเว็บแคม</p>
+    <h1 class="text-3xl font-bold mb-4 text-gray-800">
+        Welcome to the Object Counter
+    </h1>
+
+    <p class="text-gray-600 mb-6">
+        Choose an option below to upload a video or use your webcam
+        for real-time object detection and counting.
+    </p>
+
     <div class="flex justify-center gap-4">
-        <a href="{{ url_for('upload_controller.upload_page') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow transition">ไปหน้าอัปโหลด</a>
-        <a href="{{ url_for('webcam_controller.webcam_page') }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded shadow transition">ไปหน้าเปิดกล้อง</a>
+        <a href="{{ url_for('upload_controller.upload_page') }}"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow transition">
+            Upload Video
+        </a>
+
+        <a href="{{ url_for('webcam_controller.webcam_page') }}"
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded shadow transition">
+            Open Webcam
+        </a>
     </div>
 </div>
 {% endblock %}

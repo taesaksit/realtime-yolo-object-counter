@@ -8,9 +8,11 @@ app = Flask(__name__)
 app.register_blueprint(upload_controller)
 app.register_blueprint(webcam_controller)
 
+
 @app.route("/")
 def index():
-    return render_template("index.html", title="หน้าแรก - Flask YOLO Hub")
+    return render_template("index.html", title="Flask")
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
