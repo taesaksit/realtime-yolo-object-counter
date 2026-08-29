@@ -2,14 +2,13 @@ import os
 import time
 
 import cv2
-import torch
 from flask import Blueprint, Response, render_template, request
 from ultralytics import YOLO, solutions
 from werkzeug.utils import secure_filename
 
-from utils.monad import Result
+from services.model_service import get_available_models, get_default_model, load_model
 from utils.device import get_device
-from services.model_service import get_available_models, load_model, get_default_model
+from utils.monad import Result
 
 upload_controller = Blueprint("upload_controller", __name__)
 
@@ -91,7 +90,7 @@ def video_feed(filename):
             (500, 100),
         ]
 
-    requested_model = request.args.get("model", default_model=default_model)
+    requested_model = request.args.get("model", default_model)
 
     available_models = get_available_models()
 
