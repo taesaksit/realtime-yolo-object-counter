@@ -15,8 +15,8 @@ A simple Flask web application for YOLO object counter with video files and webc
 - CPU / GPU support
 
 
-
-## Example
+---
+## Result
 
 
 <div>
@@ -30,11 +30,7 @@ A simple Flask web application for YOLO object counter with video files and webc
 </table>
 </div>
 
-
-
-
-
-
+---
 ## Folder Structure
 
 ```text
